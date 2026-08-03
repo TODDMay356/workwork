@@ -1,0 +1,33 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 5050,
+    "debug": false
+  },
+  "feishu": {
+    "_comment_app": "在 https://open.feishu.cn/app 创建'企业自建应用'，拿到 AppID 和 AppSecret。需要权限：im:message:send_as_bot (用于发 DM, 可选), bitable:app:readonly, bitable:app:write",
+    "app_id": "cli_aa83101e3a38dcd9",
+    "app_secret": "Aship0hC98DbjZd8XOymcgTdhT0JP26k",
+
+    "_comment_webhook": "在飞书群里设置 → 群机器人 → 添加'自定义机器人'，勾选'签名校验'会得到一个 secret。团队群和个人告警群各建一个机器人。",
+    "webhook": {
+      "team": {
+        "url": "https://open.feishu.cn/open-apis/bot/v2/hook/TEAM_HOOK_TOKEN",
+        "secret": ""
+      },
+      "personal": {
+        "url": "https://open.feishu.cn/open-apis/bot/v2/hook/1d0805f2-73c4-4a69-8362-8d86b2b63cb7",
+        "secret": ""
+      }
+    },
+
+    "_comment_bitable": "在飞书建一个多维表格，URL 形如 https://xxx.feishu.cn/base/bascnXXX?table=tblYYY。App 需被加为该表格的协作者。",
+    "bitable": {
+      "app_token": "bascnXXXXXXXXXXXXXXXXXXXXXXXX",
+      "table_id": "tblXXXXXXXXXXXX"
+    },
+
+    "_comment_dm": "(可选) 你的 open_id，用于 App 身份发 DM。留空则不启用 DM。",
+    "my_open_id": ""
+  }
+}

@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>跨境支付运营工作台</title>
+  <style>
+    :root {
+      --brand: #1664ff;
+      --brand-600: #0e4fd5;
+      --brand-50: #e8f1ff;
+      --green: #00b96b;
+      --green-50: #e6f7f0;
+      --green-800: #00673f;
+      --amber: #f57f17;
+      --amber-50: #fff8e6;
+      --amber-800: #8a5a12;
+      --red: #f54a45;
+      --red-50: #ffece8;
+      --gray-0: #ffffff;
+      --gray-50: #f7f8fa;
+      --gray-100: #f0f1f3;
+      --gray-200: #e5e6eb;
+      --gray-300: #c9cdd4;
+      --gray-500: #86909c;
+      --gray-600: #6b7280;
+      --gray-700: #4e5969;
+      --gray-800: #374151;
+      --gray-900: #1d2129;
+      --radius-sm: 8px;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --shadow-xs: 0 1px 2px rgba(0,0,0,.03);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.06);
+      --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --t: 150ms cubic-bezier(.4,0,.2,1);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    body{
+      font-family:var(--font);font-size:14px;line-height:1.6;
+      background:var(--gray-50);color:var(--gray-800);
+      -webkit-font-smoothing:antialiased;overflow:hidden;
+    }
+
+    /* App Shell */
+    .app{display:flex;height:100vh;overflow:hidden}
+
+    /* Sidebar */
+    .sidebar{
+      width:220px;flex-shrink:0;background:var(--gray-0);
+      border-right:1px solid var(--gray-200);
+      display:flex;flex-direction:column;padding:20px 14px;
+    }
+    .sidebar-brand{
+      display:flex;align-items:center;gap:10px;
+      padding:4px 6px 20px;border-bottom:1px solid var(--gray-100);
+      margin-bottom:16px;
+    }
+    .sidebar-brand .mark{
+      width:34px;height:34px;border-radius:10px;background:var(--brand);
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;font-weight:800;color:#fff;flex-shrink:0;
+    }
+    .sidebar-brand h1{
+      font-size:14px;font-weight:700;line-height:1.3;color:var(--gray-900);
+    }
+    .sidebar-brand h1 small{
+      display:block;font-size:11px;font-weight:400;color:var(--gray-500);
+    }
+    .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:2px}
+    .sidebar-nav a{
+      display:flex;align-items:center;gap:10px;
+      padding:9px 12px;border-radius:var(--radius-sm);
+      font-size:13px;font-weight:500;color:var(--gray-600);
+      text-decoration:none;transition:var(--t);cursor:pointer;
+    }
+    .sidebar-nav a:hover{background:var(--gray-100);color:var(--gray-900)}
+    .sidebar-nav a.active{background:var(--brand-50);color:var(--brand);font-weight:600}
+    .sidebar-nav a .i-dot{
+      width:7px;height:7px;border-radius:50%;flex-shrink:0;
+    }
+    .sidebar-status{
+      margin-top:auto;padding:14px 0 0;
+      border-top:1px solid var(--gray-100);
+      font-size:11px;color:var(--gray-500);
+      display:flex;align-items:center;gap:8px;
+    }
+    .sidebar-status .live{
+      width:7px;height:7px;border-radius:50%;background:var(--green);
+      box-shadow:0 0 6px rgba(0,185,107,.5);
+      animation:pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse{0%,100%{box-shadow:0 0 6px rgba(0,185,107,.5)}50%{box-shadow:0 0 12px rgba(0,185,107,.8)}}
+
+    /* Main */
+    .main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+
+    /* ---- Home View (scrollable) ---- */
+    #homeView{
+      flex:1;overflow-y:auto;padding:28px 32px 60px;
+    }
+    #homeView.hidden{display:none}
+
+    /* Top Bar */
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:16px;flex-wrap:wrap}
+    .topbar h2{font-size:20px;font-weight:700;color:var(--gray-900);letter-spacing:-.01em}
+    .topbar .meta{font-size:12.5px;color:var(--gray-500);margin-top:2px}
+    .topbar .time{font-size:12px;color:var(--gray-500);text-align:right;flex-shrink:0}
+    .topbar .time b{display:block;font-weight:700;color:var(--gray-700);font-size:20px;font-family:var(--mono);line-height:1}
+
+    /* Status Chips */
+    .status-strip{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+      gap:10px;margin-bottom:24px;
+    }
+    .chip{
+      background:var(--gray-0);border:1px solid var(--gray-200);
+      border-radius:var(--radius);padding:14px 16px;
+      box-shadow:var(--shadow-xs);transition:var(--t);
+    }
+    .chip:hover{box-shadow:var(--shadow-sm)}
+    .chip .row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+    .chip .dot{
+      width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    }
+    .chip .dot.ok{background:var(--green);box-shadow:0 0 6px rgba(0,185,107,.4)}
+    .chip .dot.off{background:var(--gray-300)}
+    .chip .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500);margin-bottom:3px}
+    .chip .val{font-size:12.5px;font-weight:600;color:var(--gray-900);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* Tool Cards */
+    .tools-grid{display:grid;gap:16px;margin-bottom:28px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+
+    .tool-card{
+      background:var(--gray-0);border:1px solid var(--gray-200);
+      border-radius:var(--radius-lg);padding:24px;
+      box-shadow:var(--shadow-sm);transition:box-shadow var(--t),transform var(--t);
+      position:relative;overflow:hidden;
+    }
+    .tool-card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:var(--brand);opacity:0;transition:opacity var(--t);
+    }
+    .tool-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+    .tool-card:hover::before{opacity:1}
+    .tool-card .icon-zone{
+      width:44px;height:44px;border-radius:var(--radius);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;margin-bottom:14px;
+    }
+    .tool-card .icon-zone.blue{background:var(--brand-50);color:var(--brand)}
+    .tool-card .icon-zone.purple{background:#f0e6ff;color:#7b3fe4}
+    .tool-card h3{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--gray-900)}
+    .tool-card .desc{font-size:12.5px;color:var(--gray-500);line-height:1.55;margin-bottom:14px}
+    .tool-card .meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .tool-card .badge{
+      display:inline-flex;align-items:center;gap:4px;
+      padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;
+    }
+    .tool-card .badge.ok{background:var(--green-50);color:var(--green-800)}
+    .tool-card .badge.na{background:var(--gray-100);color:var(--gray-500)}
+    .tool-card .badge .b-dot{width:5px;height:5px;border-radius:50%;display:inline-block}
+    .tool-card .badge.ok .b-dot{background:var(--green)}
+    .tool-card .actions{display:flex;gap:8px}
+
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      padding:7px 15px;border-radius:var(--radius-sm);font-size:12.5px;font-weight:500;
+      cursor:pointer;border:1px solid var(--gray-200);background:var(--gray-0);
+      color:var(--gray-700);text-decoration:none;transition:var(--t);
+      font-family:inherit;white-space:nowrap;
+    }
+    .btn:hover{border-color:var(--gray-400);color:var(--gray-900)}
+    .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:600}
+    .btn.primary:hover{background:var(--brand-600);border-color:var(--brand-600)}
+
+    /* Banner */
+    .banner{
+      border-radius:var(--radius);padding:12px 16px;font-size:12.5px;
+      display:flex;align-items:center;gap:10px;margin-bottom:20px;line-height:1.5;
+    }
+    .banner.ok{background:var(--green-50);color:var(--green-800)}
+    .banner.warn{background:var(--amber-50);color:var(--amber-800)}
+
+    /* Info Grid */
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+    .info-card{
+      background:var(--gray-0);border:1px solid var(--gray-200);
+      border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-xs);
+    }
+    .info-card .h{font-size:10.5px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .info-card .v{
+      font-family:var(--mono);font-size:12px;color:var(--gray-800);word-break:break-all;line-height:1.5;
+    }
+    .info-card .v code{background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:11.5px}
+
+    /* ---- Tool Iframe View ---- */
+    #toolView{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    #toolView.hidden{display:none}
+    .tool-topbar{
+      display:flex;align-items:center;gap:12px;
+      padding:12px 20px;background:var(--gray-0);
+      border-bottom:1px solid var(--gray-200);flex-shrink:0;
+    }
+    .tool-topbar .back{
+      font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;
+      display:flex;align-items:center;gap:6px;padding:6px 12px;
+      border-radius:var(--radius-sm);border:1px solid var(--gray-200);background:var(--gray-0);
+      transition:var(--t);
+    }
+    .tool-topbar .back:hover{background:var(--gray-100);color:var(--gray-900)}
+    .tool-topbar .ttl{font-size:14px;font-weight:700;color:var(--gray-900)}
+    #toolFrame{flex:1;width:100%;border:0}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark">支</div>
+      <h1>支付运营<small>Cross-Border PayOps</small></h1>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="active" data-view="home"><span class="i-dot" style="background:var(--brand)"></span>工作台</a>
+      <a data-view="conversion"><span class="i-dot" style="background:var(--green)"></span>转化率监控</a>
+      <a data-view="merchant"><span class="i-dot" style="background:#7b3fe4"></span>商户成功率</a>
+      <a data-view="order-monitor"><span class="i-dot" style="background:var(--amber)"></span>出单监控</a>
+    </nav>
+    <div class="sidebar-status"><span class="live"></span>Local · 127.0.0.1:5050</div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- HOME VIEW -->
+    <div id="homeView">
+      <div class="topbar">
+        <div>
+          <h2>运营看板</h2>
+          <div class="meta">数据巡检 &amp; 异常推送</div>
+        </div>
+        <div class="time">本地时间<b id="liveTime">--:--</b></div>
+      </div>
+
+      <div id="banner" hidden></div>
+
+      <div class="status-strip">
+        <div class="chip"><div class="label">App 凭据</div><div class="row"><span class="dot off" id="dotApp"></span><span class="val" data-skey="app">检查中...</span></div></div>
+        <div class="chip"><div class="label">Access Token</div><div class="row"><span class="dot off" id="dotToken"></span><span class="val" data-skey="token">检查中...</span></div></div>
+        <div class="chip"><div class="label">群 Webhook</div><div class="row"><span class="dot off" id="dotHook"></span><span class="val" data-skey="hook">检查中...</span></div></div>
+        <div class="chip"><div class="label">多维表格</div><div class="row"><span class="dot off" id="dotBitable"></span><span class="val" data-skey="bitable">检查中...</span></div></div>
+        <div class="chip"><div class="label">服务状态</div><div class="row"><span class="dot ok"></span><span class="val">正常运行</span></div></div>
+      </div>
+
+      <div class="tools-grid">
+        <div class="tool-card">
+          <div class="icon-zone blue">📊</div>
+          <h3>每日转化率数据监控</h3>
+          <div class="desc">上传 Excel 自动解析异常，推送飞书群告警，同步多维表格留存历史。</div>
+          <div class="meta-row">
+            <span class="badge ok"><span class="b-dot"></span>飞书同步</span>
+            <span class="badge ok"><span class="b-dot"></span>MOT 留存</span>
+          </div>
+          <div class="actions">
+            <button class="btn primary" onclick="setupAndOpen('conversion')">一键配置并打开</button>
+            <button class="btn" onclick="openTool('conversion')">直接打开</button>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="icon-zone purple">🔍</div>
+          <h3>商户转化率 &amp; 成功率分析</h3>
+          <div class="desc">单商户深度诊断：漏斗拆解 / 失败原因归类 / 维度交叉下钻 / AI 归因总结。</div>
+          <div class="meta-row"><span class="badge na">纯分析 · 无同步</span></div>
+          <div class="actions">
+            <button class="btn primary" onclick="openTool('merchant')">打开工具</button>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="icon-zone" style="background:#fff0e6;color:var(--amber)">📦</div>
+          <h3>出单耗时监控</h3>
+          <div class="desc">上传今天 &amp; 昨天的 Excel，自动对比分类 → 飞书通知 → 多维表格留存。</div>
+          <div class="meta-row"><span class="badge na">外部 Python 脚本</span></div>
+          <form id="orderForm" enctype="multipart/form-data" onsubmit="runOrderMonitor(event)" style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <label style="flex:1;min-width:140px;font-size:11.5px;color:var(--gray-500)">
+                今天的报表
+                <input type="file" name="today" accept=".xlsx,.xls" required style="display:block;width:100%;margin-top:3px;font-size:12px">
+              </label>
+              <label style="flex:1;min-width:140px;font-size:11.5px;color:var(--gray-500)">
+                昨天的报表
+                <input type="file" name="yesterday" accept=".xlsx,.xls" required style="display:block;width:100%;margin-top:3px;font-size:12px">
+              </label>
+            </div>
+            <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+              <label style="font-size:11.5px;color:var(--gray-500);min-width:120px">
+                业务日期
+                <input type="date" name="date" required style="display:block;width:100%;margin-top:3px;font-size:12px;padding:4px 8px;border:1px solid var(--gray-200);border-radius:6px">
+              </label>
+              <label style="font-size:11.5px;color:var(--gray-500);min-width:140px">
+                密码
+                <input type="password" name="password" required placeholder="Landy371407tt" style="display:block;width:100%;margin-top:3px;font-size:12px;padding:5px 8px;border:1px solid var(--gray-200);border-radius:6px">
+              </label>
+              <button type="submit" class="btn primary" id="btnOrderMonitor" style="align-self:end">启动出单监控</button>
+            </div>
+          </form>
+          <div id="orderMsg" style="margin-top:8px;font-size:12px;color:var(--gray-500)" hidden></div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-card"><div class="h">Webhook 中继</div><div class="v"><code id="addrHook">—</code></div></div>
+        <div class="info-card"><div class="h">多维表格代理</div><div class="v"><code id="addrBitable">—</code></div></div>
+      </div>
+    </div>
+
+    <!-- TOOL IFRAME VIEW -->
+    <div id="toolView" class="hidden">
+      <div class="tool-topbar">
+        <button class="back" onclick="goHome()">← 返回工作台</button>
+        <span class="ttl" id="toolTitle"></span>
+      </div>
+      <iframe id="toolFrame" src="about:blank"></iframe>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API = location.origin;
+  document.getElementById('addrHook').textContent = API + '/api/feishu/webhook';
+  document.getElementById('addrBitable').textContent = API + '/api/feishu';
+
+  // live clock
+  function tick(){
+    const d = new Date();
+    document.getElementById('liveTime').textContent =
+      d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  }
+  tick();setInterval(tick,15000);
+
+  // ---- sidebar navigation ----
+  const TOOL_TITLES = {
+    conversion: '每日转化率数据监控',
+    merchant: '商户转化率 & 成功率分析'
+  };
+
+  document.querySelectorAll('.sidebar-nav a').forEach(link => {
+    link.addEventListener('click', function(e){
+      e.preventDefault();
+      const view = this.dataset.view;
+      if (view === 'home') { goHome(); }
+      else if (view === 'order-monitor') { runOrderMonitor(); }
+      else if (view) { openTool(view); }
+      // highlight
+      document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  function openTool(name){
+    document.getElementById('homeView').classList.add('hidden');
+    const tv = document.getElementById('toolView');
+    tv.classList.remove('hidden');
+    document.getElementById('toolTitle').textContent = TOOL_TITLES[name] || name;
+    document.getElementById('toolFrame').src = '/' + name;
+  }
+
+  function goHome(){
+    document.getElementById('toolView').classList.add('hidden');
+    document.getElementById('toolFrame').src = 'about:blank';
+    document.getElementById('homeView').classList.remove('hidden');
+    document.querySelectorAll('.sidebar-nav a').forEach(a=>{
+      a.classList.toggle('active', a.dataset.view === 'home');
+    });
+  }
+
+  // ---- 出单监控触发 ----
+  async function runOrderMonitor(e){
+    e.preventDefault();
+    const form = document.getElementById('orderForm');
+    const btn = document.getElementById('btnOrderMonitor');
+    const msg = document.getElementById('orderMsg');
+    const orig = btn.textContent;
+    btn.textContent = '上传中...';
+    btn.disabled = true;
+    msg.hidden = true;
+
+    const fd = new FormData(form);
+    try{
+      const r = await fetch(API + '/api/run/order-monitor', {method:'POST',body:fd});
+      const data = await r.json();
+      if(data.ok){
+        btn.textContent = '已启动 ✓';
+        msg.hidden = false;
+        msg.textContent = '出单监控脚本已在后台运行，请等待脚本完成（查看脚本控制台输出）';
+      }else{
+        btn.textContent = orig;
+        msg.hidden = false;
+        msg.style.color = 'var(--red)';
+        msg.textContent = '错误: ' + (data.msg||'未知');
+      }
+    }catch(err){
+      btn.textContent = orig;
+      btn.disabled = false;
+      msg.hidden = false;
+      msg.style.color = 'var(--red)';
+      msg.textContent = '网络错误: ' + err.message;
+    }
+    setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},3000);
+  }
+
+  // ---- one-click setup + open ----
+  function setupAndOpen(name){
+    if (name !== 'conversion') return;
+    const defs = {
+      fsHook:API+'/api/feishu/webhook', fsProxy:API+'/api/feishu/webhook',
+      fsBaseProxy:API+'/api/feishu', fsApp:'see_config_json',
+      fsTable:'see_config_json', fsToken:'managed_by_workbench',
+      fsAuto:'1', fsCardMode:'1'
+    };
+    try{
+      const cur = JSON.parse(localStorage.getItem('crm_feishu')||'{}');
+      localStorage.setItem('crm_feishu', JSON.stringify(Object.assign({},cur,defs)));
+    }catch(e){
+      localStorage.setItem('crm_feishu', JSON.stringify(defs));
+    }
+    openTool(name);
+  }
+
+  // ---- status refresh ----
+  async function refreshStatus(){
+    try{
+      const r = await fetch('/api/status').then(r=>r.json());
+      if (!r.config_loaded || !r.summary) return;
+      const s = r.summary;
+      const map = {
+        app:['dotApp',s.feishu_app_configured,s.feishu_app_configured?'已配置':'未配置'],
+        token:['dotToken',!!(s.token&&s.token.valid),s.token&&s.token.valid?`有效 · 剩${Math.floor((s.token.seconds_left||0)/60)}分钟`:'未生效'],
+        hook:['dotHook',s.webhook_personal_configured||s.webhook_team_configured,(s.webhook_personal_configured||s.webhook_team_configured)?'已配置':'未配置'],
+        bitable:['dotBitable',!!(s.bitable&&s.bitable.configured),s.bitable&&s.bitable.configured?s.bitable.app_token:'未配置'],
+      };
+      let allOk = true;
+      for(const [key,[dotId,ok,label]] of Object.entries(map)){
+        const el = document.querySelector(`[data-skey="${key}"]`);
+        if(el) el.textContent = label;
+        const dot = document.getElementById(dotId);
+        if(dot) dot.className = 'dot ' + (ok?'ok':'off');
+        if(!ok) allOk = false;
+      }
+      const b = document.getElementById('banner');
+      b.className = 'banner ' + (allOk?'ok':'warn');
+      b.hidden = false;
+      b.textContent = allOk
+        ? '✓  飞书全链路已就绪 — 上传文件即自动同步群消息 + 多维表格'
+        : '!  部分配置未就绪，请在 config.json 中补全后重启工作台';
+    }catch(e){console.error(e)}
+  }
+  document.addEventListener('DOMContentLoaded', refreshStatus);
+</script>
+</body>
+</html>
